@@ -13,23 +13,50 @@ The transition dynamics of an MDP can be generically expressed as the probabilit
  * $\P{r | s, a}$ - the probability of observing a reward of $r$ given that I started in state $s$ and took action $a$.
  * $\P{a | s}$ - the probability of taking action $a$ in state $s$. Often denoted as $\pi(a | s)$ in the RL literature (and called a "policy").
 
-Using these fundamental quantities, we can construct everything else that we will need in this post.
+Using these fundamental quantities, we can construct everything else that we will need.
 
-The first such probability that we will need to know is the probability that we transition to state $s'$ given we started in state $s$ when we behave according to policy $\pi$.
+The first such constructed quantity is the probability that we transition to state $s'$ given we started in state $s$ when we behave according to policy $\pi$.
 More succinctly, we want to know
 $$
-    \P{s' | s, a \sim \pi(\cdot | s)} = \sum_{a \in \mathcal{A}} \P{s' | s, a} \pi(a | s)
+\begin{aligned}
+    \P{s' | s}
+        &= \sum_{a \in \mathcal{A}} \P{s' | s, a} \pi(a | s) && (1) \\
+        &= \mathbb{P}_{a \sim \pi(\cdot | s)}\left( s' | s \right) && (2)
+\end{aligned}
 $$
-where the summation is [marginalizing](../TODO.md) over actions.
-The notation on the left-side of the equal sign states "the probability of observing a particular next state $s'$ given that we are in state $s$ and that actions are selected according to policy $\pi$ at that state."
+where the summation is marginalizing over actions.
+This is notationally a little clumsy.
+We could define such a $\P{s' | s}$ for any given policy, but our notation does not state _which_ policy we sampled actions according to.
+Often in statistics, we might denote this as Equation (2) to demonstrate under which probability law we consider our actions.
+However, this notation is rather dense and can become visually burdensome later on.
+So we are left to choose, a clumsy imprecise notation (1) or a dense, burdensome, but precise notation (2).
 
 Equipped with the probability of transitioning from one state to the next, we can describe the transition probability matrix.
 A transition matrix is a square matrix with one row and one column for every state.
 You can interpret each row as being the current state and each column as being the next state, such that the $i$'th row and $j$'th column describes the probability of transitioning to state $j$ from state $i$.
-
-
+That is, take your finger along the left side of the matrix and select a row---that is your starting state---then take another finger along the top of the matrix and select a column---that is your next state---bring your fingers together and the cell they land on describes the probability $P_{i,j} = \P{s_j | s_i}$, where we generally denote the probability matrix as $P \in [0,1]^{|\mathcal{S}| \times |\mathcal{S}|}$.
+When we need to be clear which policy was used to generate the transition probabilities (recall Equation 1), then we denote this as $P_\pi$.
 
 ## Value functions
+I will assume knowledge of the basic definitions of value functions.
+For a quick primer, [this post](./bellman-consistency.md) has a formal definition.
+Notice that
+$$
+\begin{aligned}
+V(s)
+    &\doteq \E{R + \gamma V(s') \; | \; s}
+        && \anote{definition of value function} \\
+
+    &= r(s) + \gamma \E{V(s') \; | \; s}
+        && \anote{define $r(s)$ as the average reward in state $s$ following policy $\pi$} \\
+
+    &= r(s) + \gamma \sum_a \pi(a | s) \sum_{s'} \P{s' | s, a} V(s')
+        && \anote{decompose the expectation into sums} \\
+
+    &= r(s) + \gamma \sum_{s'} \P{s' | s} V(s').
+        && \anote{combine the marginalization over actions as in Equation (1)}
+\end{aligned}
+$$
 
 ## Extension to state-action values
 
