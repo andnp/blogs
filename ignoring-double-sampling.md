@@ -86,18 +86,19 @@ What's wrong with this approach?
 Recall a fundamental theorem in reinforcement learning:
 > The optimal value function $v_\pi$ uniquely solves the Bellman Equation $\text{B}v_\pi = v_\pi$ for Bellman Operator $\text{B}V = R + \gamma V'$.
 
-Using this theorem, a natural idea would be to try and minimize the distance between $\text{B}V$ and our estimate $V$, knowing that if this distance is zero then we must have found the optimal value function $v_\pi$.
-One distance metric we could consider is the mean-squared error, where we compute squared distances between the Bellman step $\text{B}V$ and the estimate $V$ for every state, then average these distances together.
+Building off this theorem, a natural idea would be to try and minimize the distance between $\text{B}V$ and our estimate $V$, knowing that if this distance is zero then we must have found the optimal value function $v_\pi$.
+One distance metric we could consider is the mean-squared error, where we compute squared distances between the Bellman step $\text{B}V$ and the estimate $V$ for every state, then average these distances together; which is exactly what the Mean-squared Bellman Error does.
 $$
 \overline{\text{MSBE}} = \frac{1}{|\mathcal{S}|} \sum_{s \in \mathcal{S}} \text{dist}\(\text{B}V(s), V(s) \)
 $$
 
 Minimizing this objective to zero guarantees that we will find the optimal value function.
-But what happens if we minimize the MSTDE to zero instead, as we will try to do using our gradient procedure that ignores double sampling?
+However, we know that ignoring the double sampling issue leads towards minimizing another objective, the Mean-squared TD error.
+So what happens if we minimize the MSTDE to zero instead?
 $$
 \E{\delta} \E{\nabla_w \delta} = \E{\delta \nabla_w \delta} - \text{Cov}(\delta, \nabla_w \delta)
 $$
-which implies
+which implies.
 $$
 \underbrace{\text{dist}\( \frac{1}{|\mathcal{S}|} \sum_{s \in \mathcal{S}} \text{B}V(s), \frac{1}{|\mathcal{S}|} \sum_{s \in \mathcal{S}} V(s) \)}_{\overline{\text{TDE}}}
 =
@@ -110,7 +111,10 @@ Minimizing the MSTDE includes minimizing some residual leftover term due to the 
 Reaching the zero of the MSTDE would guarantee that we also reach the zero of the MSBE (because both MSBE and the leftovers are positive); however it is often impossible to reach the zero of the MSTDE.
 To intuitively see why, consider that the leftover covariance term depends on the variance of the rewards on each state; a variance that the learning algorithm has no agency over (the agent cannot control this variance by changing its weights $w$).
 If we can't reach the zero of the MSTDE, then that leaves open the question of where we _do_ end up instead, but it is not guaranteed to be a point where the MSBE is also zero.
-Without this, we can guarantee convergence (and thus that the learning process will be well behaved) but we cannot guarantee where we will converge to (and thus the final asymptotic error in the solution).
+We can at least guarantee convergence--and thus that the learning process will be well behaved--but we cannot guarantee where we will converge to (and thus what is the final asymptotic error in the solution).
 In practice, this solution turns out to often be pretty poor.
 
-[TODO: show some results investigating the fixed-point of the MSTDE objective as well as learning curves of the residual gradient algorithm]
+For instance, taking the naive algorithm which uses the gradient that ignores double sampling and comparing it to simple semi-gradient TD on a 5-state random walk, we find that the double-sampling based algorithm converges to a far worse solution.
+On the y-axis we have the Mean-squared value error (how wrong our value function is from the optimal value function) and on the x-axis we have number of training steps.
+Even as our data size and training steps go towards infinity, the double-sampling algorithm (RG for Residual Gradient) will never approach zero error.
+![Residual Gradient vs. TD](images/rg-vs-td.png)
